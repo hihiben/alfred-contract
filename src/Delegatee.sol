@@ -42,6 +42,7 @@ contract Delegatee is IDelegatee, EIP712 {
 
     function executeTask(address user, DataType.Task calldata task, bytes calldata taskSignature, bytes calldata data)
         external
+        payable
     {
         // Check task signature
         _validateTask(task, user, taskSignature);
@@ -54,7 +55,9 @@ contract Delegatee is IDelegatee, EIP712 {
             bytes memory signature,
             address[] memory tokensReturn
         ) = abi.decode(data[4:], (bytes[], ProtocolinkDataType.LogicBatch, address, bytes, address[]));
-        IRouter(router).executeForWithSignerFee(user, permit2Datas, logicBatch, signer, signature, tokensReturn);
+        IRouter(router).executeForWithSignerFee{value: msg.value}(
+            user, permit2Datas, logicBatch, signer, signature, tokensReturn
+        );
         // Check after state
         _validateAfterState(task, user);
     }

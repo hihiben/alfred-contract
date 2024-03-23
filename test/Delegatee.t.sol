@@ -8,6 +8,7 @@ import {Delegatee, IDelegatee} from "src/Delegatee.sol";
 import {IRouter} from "@protocolink/interfaces/IRouter.sol";
 import {TypedDataSignature} from "./utils/TypedDataSignature.sol";
 import {Pool} from "./mocks/MockAavev3Pool.sol";
+import {Router} from "./mocks/MockRouter.sol";
 
 contract DelegateeTest is Test, TypedDataSignature {
     uint256 public constant BPS_BASE = 10_000;
@@ -24,6 +25,7 @@ contract DelegateeTest is Test, TypedDataSignature {
     bytes public dataOut;
     address public verifyingContract;
     uint256 public chainId;
+    uint256 public someEther;
 
     // Empty arrays
     // Empty types
@@ -38,10 +40,12 @@ contract DelegateeTest is Test, TypedDataSignature {
     function setUp() external {
         (user, key) = makeAddrAndKey("User");
         alfred = makeAddr("Alfred");
-        router = makeAddr("Router");
+        router = address(new Router());
         signer = makeAddr("Signer");
         vm.etch(router, "code");
         aavev3Pool = address(new Pool(user));
+        someEther = 1 ether;
+        deal(alfred, someEther);
 
         delegatee = new Delegatee(router, aavev3Pool);
 
@@ -64,7 +68,7 @@ contract DelegateeTest is Test, TypedDataSignature {
         );
 
         vm.label(address(delegatee), "Delegatee");
-        vm.mockCall(router, dataOut, temp);
+        vm.mockCall(router, someEther, dataOut, temp);
     }
 
     function _buildDomainSeparator() internal view returns (bytes32) {
@@ -79,6 +83,6 @@ contract DelegateeTest is Test, TypedDataSignature {
         DataType.Task memory task = DataType.Task(15000, 14000, 16000, 1713754824);
         taskSig = getTypedDataSignature(task, _buildDomainSeparator(), key);
         vm.startPrank(alfred);
-        delegatee.executeTask(user, task, taskSig, dataIn);
+        delegatee.executeTask{value: someEther}(user, task, taskSig, dataIn);
     }
 }

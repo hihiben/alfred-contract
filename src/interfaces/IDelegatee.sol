@@ -16,7 +16,8 @@ interface IDelegatee {
     function router() external view returns (address);
 
     function executeTask(address user, DataType.Task calldata task, bytes calldata taskSignature, bytes calldata data)
-        external;
+        external
+        payable;
 
     // function executeTaskWithAllow(
     //     DataType.Task calldata task,
